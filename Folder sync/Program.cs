@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using static System.Net.Mime.MediaTypeNames;
 
 class Program
 {
@@ -13,12 +16,11 @@ class Program
         if (!Directory.Exists(fileSource))
         {
             Console.WriteLine("The source directory does not exist.");
-            return;
-        }
-        else
-        {
+            Console.Write("Define the folder to be synchronized: ");
+            fileSource = Console.ReadLine();
 
-        }
+            }
+
 
         // Prompt the user to enter the path of the destination folder.
         Console.Write("Define the destination path: ");
@@ -28,7 +30,9 @@ class Program
         if (!Directory.Exists(fileDestination))
         {
             Console.WriteLine("The destination directory does not exist.");
-            return;
+            Console.Write("Define the destination path: ");
+            fileDestination = Console.ReadLine();
+            
         }
 
         // Prompt the user to enter the destination path for the logs.
@@ -40,11 +44,13 @@ class Program
         if (!Directory.Exists(logFilePath))
         {
             Console.WriteLine("The destination directory does not exist.");
+            Console.Write("Set the log destination path: ");
+            // Set the path for the log file.
+            logFilePath = Console.ReadLine();
             
-            return;
         }else { logFilePath = logFilePath + @"\logsync.txt"; }
        
-        Console.WriteLine(logFilePath);
+
         // Prompt the user to enter the synchronization period in minutes.
         Console.Write("Enter the synchronization period in minutes: ");
         if (!int.TryParse(Console.ReadLine(), out int timeSync))
@@ -57,11 +63,12 @@ class Program
         // Create or open the log file for writing.
  
 
-            Console.WriteLine("Press Enter to start synchronization. Press Ctrl+C to exit.");
-            InitialSync(logFilePath, fileSource, fileDestination);
-            Console.WriteLine(fileSource, fileDestination);
-            // Create the FileSystemWatcher to monitor the source folder.
-            using (FileSystemWatcher watcher = new FileSystemWatcher())
+        Console.WriteLine(" Press Ctrl+C to exit.");
+        Console.WriteLine("log path: " + logFilePath);
+        InitialSync(logFilePath, fileSource, fileDestination);
+            
+        // Create the FileSystemWatcher to monitor the source folder.
+        using (FileSystemWatcher watcher = new FileSystemWatcher())
             {
                 watcher.Path = fileSource;
                 watcher.IncludeSubdirectories = true;
@@ -73,10 +80,9 @@ class Program
                 while (true)
                 {
                     //Execute the event for when a file is created, changed, or deleted.
-                    watcher.Created += (sender, e) => FilesSync(logFilePath, fileSource, fileDestination, e.FullPath);
-                    watcher.Changed += (sender, e) => FilesSync(logFilePath, fileSource, fileDestination, e.FullPath);
+                    watcher.Created += (sender, e) => FilesSync(logFilePath, fileDestination, e.FullPath);
+                    watcher.Changed += (sender, e) => FilesSync(logFilePath, fileDestination, e.FullPath);
                     watcher.Deleted += (sender, e) => FileDelete(logFilePath, fileDestination, e.FullPath);
-                    watcher.Renamed += (sender, e) => FileRename(logFilePath, fileDestination, e.OldFullPath, e.FullPath);
                     
                     // Wait for the specified time interval before synchronizing again.
                     System.Threading.Thread.Sleep(timeSync * 10000); // Convert to minutes.
@@ -89,26 +95,33 @@ class Program
     {
         //Create or open the log file for writing.
         using StreamWriter writer = new StreamWriter(logFilePath);
+        Console.WriteLine($"[{DateTime.Now}] -Initial sync.");
         {
             string[] arquivos = Directory.GetFiles(fileSource);
             Console.WriteLine(fileSource);
             foreach (string item in arquivos)
             {
+                // Get the file name.
                 string fileName = Path.GetFileName(item);
+                // Create the full path for the destination file.
                 string destinationPath = Path.Combine(fileDestination, fileName);
+                // Get the full path for the source file.
                 string sourcePath = Path.Combine(fileSource, fileName);
-
+                // Copy the source file to the destination, overwriting if necessary.
                 File.Copy(sourcePath, destinationPath, true);
-                string mensagemLog = $"File synchronized: {fileSource}  {destinationPath}";
+                // Record the error in the log file.
+                string mensagemLog = $"[{DateTime.Now}]-File synchronized: {fileSource}->{destinationPath}";
                 Console.WriteLine(mensagemLog);
                 writer.WriteLine(mensagemLog);
-                writer.Close();
+                
 
             }
-
+            Console.WriteLine($"[{DateTime.Now}] -Initial sync concluded.");
+            writer.WriteLine($"[{DateTime.Now}] -Initial sync concluded.");
+            writer.Close();
         }
     }
-    static void FilesSync(string logFilePath, string fileSource, string fileDestination, string filePath)
+    static void FilesSync(string logFilePath, string fileDestination, string filePath)
     {
         //Create or open the log file for writing.
         using StreamWriter writer = new StreamWriter(logFilePath);
@@ -125,7 +138,7 @@ class Program
                 File.Copy(filePath, pathDestination, true);
 
                 // Record the error in the log file.
-                string mensagemLog = $"File synchronized: {filePath} -> {fileDestination}";
+                string mensagemLog = $"[{DateTime.Now}]-File synchronized: {filePath} -> {fileDestination}";
                 Console.WriteLine(mensagemLog);
                 writer.WriteLine(mensagemLog);
                 writer.Close();
@@ -133,39 +146,14 @@ class Program
             catch (Exception ex)
             {
                 // Record the error in the log file.
-                string mensagemErro = $"An error occurred during synchronization: {ex.Message}";
+                string mensagemErro = $"[{DateTime.Now}]-An error occurred during synchronization: {ex.Message}";
                 Console.WriteLine(mensagemErro);
                 writer.WriteLine(mensagemErro);
+                writer.Close();
             }
         }
     }
-    static void FileRename(string logFilePath , string destinationFolder, string oldName, string filePath)
-    {
-        //Create or open the log file for writing.
-        using StreamWriter writer = new StreamWriter(logFilePath);
-        {
-            try
-            {
-                string caminhoArquivoSincronizado = Path.Combine(filePath, e.Name);
-                string novoCaminhoArquivoSincronizado = Path.Combine(destinationFolder, e.FullPath.Substring(e.OldFullPath.Length + 1));
 
-                File.Move(caminhoArquivoSincronizado, novoCaminhoArquivoSincronizado);
-                
-                string mensageLog = $"Archive renamed: {oldarchiveName} -> {archiveName}";
-                // Record the error in the log file.
-                Console.WriteLine(mensageLog);
-                writer.WriteLine(mensageLog);
-            }
-            catch (Exception ex)
-            {
-                // Record the error in the log file.
-                string mensagemErro = $"An error occurred during synchronization: {ex.Message}";
-                Console.WriteLine(mensagemErro);
-                writer.WriteLine(mensagemErro);
-            }
-
-        }
-    }
     static void FileDelete(string logFilePath, string archiveDestinyPath, string filePath)
     {
         //Create or open the log file for writing.
@@ -185,17 +173,19 @@ class Program
                     File.Delete(destinationFolder);
 
                     // Record the error in the log file.
-                    string mensagemLog = $"File deleted: {destinationFolder}";
+                    string mensagemLog = $"[{DateTime.Now}]-File deleted: {destinationFolder}";
                     Console.WriteLine(mensagemLog);
                     writer.WriteLine(mensagemLog);
+                    writer.Close();
                 }
             }
             catch (Exception ex)
             {
                 // Record the error in the log file.
-                string mensagemErro = $"An error occurred during synchronization: {ex.Message}";
+                string mensagemErro = $"[{DateTime.Now}]-An error occurred during synchronization: {ex.Message}";
                 Console.WriteLine(mensagemErro);
                 writer.WriteLine(mensagemErro);
+                writer.Close();
             }
         }
     }
