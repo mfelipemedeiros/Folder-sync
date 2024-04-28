@@ -93,7 +93,7 @@ class Program
     static void InitialSync(string logFilePath, string fileSource, string fileDestination)
     {
         //Create or open the log file for writing.
-        using StreamWriter writer = new StreamWriter(logFilePath);
+        using StreamWriter writer = new StreamWriter(logFilePath, true);
         Console.WriteLine($"[{DateTime.Now}] -Initial sync.");
         {
             string[] arquivos = Directory.GetFiles(fileSource);
@@ -125,7 +125,7 @@ class Program
     static void FilesSync(string logFilePath, string fileDestination, string filePath)
     {
         //Create or open the log file for writing.
-        using StreamWriter writer = new StreamWriter(logFilePath);
+        using StreamWriter writer = new StreamWriter(logFilePath, true);
         {
             try
             {
@@ -145,7 +145,7 @@ class Program
                 string mensagemLog = $"[{DateTime.Now}]-File synchronized: {filePath} -> {fileDestination}";
                Console.WriteLine(mensagemLog);
                 writer.WriteLine(mensagemLog);
-                writer.Close();
+                
             }
             catch (Exception ex)
             {
@@ -153,7 +153,7 @@ class Program
                 string mensagemErro = $"[{DateTime.Now}]-An error occurred during synchronization: {ex.Message}";
                 Console.WriteLine(mensagemErro);
                 writer.WriteLine(mensagemErro);
-                writer.Close();
+                
             }
         }
     }
@@ -161,7 +161,7 @@ class Program
     static void FileDelete(string logFilePath, string archiveDestinyPath, string filePath)
     {
         //Create or open the log file for writing.
-        using StreamWriter writer = new StreamWriter(logFilePath);
+        using StreamWriter writer = new StreamWriter(logFilePath, true);
         {
             try
             {
@@ -180,7 +180,7 @@ class Program
                     string mensagemLog = $"[{DateTime.Now}]-File deleted: {destinationFolder}";
                     Console.WriteLine(mensagemLog);
                     writer.WriteLine(mensagemLog);
-                    writer.Close();
+                    
                 }
             }
             catch (Exception ex)
@@ -189,7 +189,7 @@ class Program
                 string mensagemErro = $"[{DateTime.Now}]-An error occurred during synchronization: {ex.Message}";
                 Console.WriteLine(mensagemErro);
                 writer.WriteLine(mensagemErro);
-                writer.Close();
+                
             }
         }
     }
