@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using static System.Net.Mime.MediaTypeNames;
 
 class Program
 {
@@ -74,18 +73,18 @@ class Program
                 watcher.IncludeSubdirectories = true;
                 watcher.EnableRaisingEvents = true;
 
-
-
-                // Loop for continuous synchronization.
-                while (true)
+            //Execute the event for when a file is created, changed, or deleted.
+            watcher.Created += (sender, e) => FilesSync(logFilePath, fileDestination, e.FullPath);
+            watcher.Changed += (sender, e) => FilesSync(logFilePath, fileDestination, e.FullPath);
+            watcher.Deleted += (sender, e) => FileDelete(logFilePath, fileDestination, e.FullPath);
+            Console.WriteLine($"The next synchronization will occur in {timeSync} minutes.");
+            // Loop for continuous synchronization.
+            while (true)
                 {
-                    //Execute the event for when a file is created, changed, or deleted.
-                    watcher.Created += (sender, e) => FilesSync(logFilePath, fileDestination, e.FullPath);
-                    watcher.Changed += (sender, e) => FilesSync(logFilePath, fileDestination, e.FullPath);
-                    watcher.Deleted += (sender, e) => FileDelete(logFilePath, fileDestination, e.FullPath);
-                    
-                    // Wait for the specified time interval before synchronizing again.
-                    System.Threading.Thread.Sleep(timeSync * 10000); // Convert to minutes.
+
+                
+                // Wait for the specified time interval before synchronizing again.
+                System.Threading.Thread.Sleep(timeSync * 10000); // Convert to minutes.
                 
             }
         }
@@ -98,9 +97,10 @@ class Program
         Console.WriteLine($"[{DateTime.Now}] -Initial sync.");
         {
             string[] arquivos = Directory.GetFiles(fileSource);
-            Console.WriteLine(fileSource);
+            
             foreach (string item in arquivos)
             {
+                
                 // Get the file name.
                 string fileName = Path.GetFileName(item);
                 // Create the full path for the destination file.
@@ -117,6 +117,7 @@ class Program
 
             }
             Console.WriteLine($"[{DateTime.Now}] -Initial sync concluded.");
+            Console.WriteLine("Wait for the new changes.");
             writer.WriteLine($"[{DateTime.Now}] -Initial sync concluded.");
             writer.Close();
         }
@@ -128,6 +129,7 @@ class Program
         {
             try
             {
+
                 // Get the file name.
                 string fileName = Path.GetFileName(filePath);
 
@@ -138,8 +140,10 @@ class Program
                 File.Copy(filePath, pathDestination, true);
 
                 // Record the error in the log file.
+
+                
                 string mensagemLog = $"[{DateTime.Now}]-File synchronized: {filePath} -> {fileDestination}";
-                Console.WriteLine(mensagemLog);
+               Console.WriteLine(mensagemLog);
                 writer.WriteLine(mensagemLog);
                 writer.Close();
             }
